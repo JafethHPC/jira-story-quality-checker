@@ -1,6 +1,20 @@
 # Importing necessary libraries for NLP and text analysis
 import spacy # spaCy is a powerful NLP library used for text processing, tokenization, dependency parsing, and named entity recognition (NER)
 from textblob import TextBlob # TextBlob is a simple NLP library that helps with sentiment analysis, text classification, and more
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (you can restrict this to your frontend URL)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Load the spaCy model for Natural Language Processing (NLP)
 # This model is pre-trained and helps analyze text by breaking it into words (tokens), identifying parts of speech, and more
@@ -8,8 +22,12 @@ nlp = spacy.load("en_core_web_md")
 
 custom_keywords = ["user", "developer", "admin", "feature", "login", "payment", "payment system", "dashboard", "data", "security"]
 
+class TextRequest(BaseModel):
+    description: str
 
-def evaluate_jira_story(description: str):
+@app.post("/evaluate/")
+def evaluate_jira_story(request: TextRequest):
+    description = request.description
     """
     Evaluates a Jira story description by analyzing its structure and content using NLP techniques.
     The function checks if the story follows best practices for Jira user stories and provides a score along with feedback for improvement.
@@ -102,15 +120,5 @@ def evaluate_jira_story(description: str):
     return score, feedback
 
 if __name__ == "__main__":
-    # Ask the user for the Jira story description
-    description = input("Enter the Jira story description: ")
-
-    # Call the evaluate_jira_story function to evaluate the story description
-    score, feedback = evaluate_jira_story(description)
-
-    # Display the evaluation results
-    print("\nJira Story Evaluation Results:")
-    print(f"Score: {score}/100")
-    print("Feedback:")
-    for message in feedback:
-        print(message)
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
